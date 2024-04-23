@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 
 import { supabase } from '@/supabaseClient';
 
-function CreatePost() {
+function CreatePost({username}) {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -58,7 +58,7 @@ function CreatePost() {
       const { data, error } = await supabase
         .from('Posts')
         .insert([
-          {title: title, description: description, content: fileContent}
+          {title: title, author: username, description: description, content: fileContent}
         ])
     } catch (error) {
       console.error('Error creating post: ', error.message)
