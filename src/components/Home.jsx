@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Link } from 'react-router-dom';
@@ -6,8 +6,11 @@ import { supabase } from '@/supabaseClient';
 
 const Home = () => {
 
+  const isInitialMount = useRef(true);
   const [posts, setPosts] = useState([])
   const [orderBy, setOrderBy] = useState('');
+
+  console.log(orderBy);
   
   // read all posts from Supabase as soon as the component mounts
   useEffect(() => {
@@ -24,19 +27,40 @@ const Home = () => {
     fetchPosts()
   }, [])
 
+  // update home page once orderBy state changes
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      const updateHomePage = async () => {
+        try {
+          const { data, error} = await supabase
+            .from('Posts')
+            .select()
+            .order(orderBy, {ascending: false})
+          setPosts(data)
+        } catch (error) {
+          console.log('Error: ', error.message)
+        }
+      }
+
+      updateHomePage()
+    }
+
+  }, [orderBy])
+
   console.log(posts);
   return (
     <div className="px-12">
       <div className="border-[3px] rounded-3xl border-gray-900 flex justify-between items-center mb-7 p-7">
         <div className="w-full flex items-center justify-between ">
-          <div className="ml-6">
+          <div className="ml-6 flex items-center gap-4">
             Sort by:
-            {/* <Badge>Newest</Badge>
-            <Badge>Most Popular</Badge> */}
+            <Badge className='bg-[#0084FF] hover:bg-blue-700 cursor-pointer p-3' onClick={() => setOrderBy('created_at')}>Newest</Badge>
+            <Badge className='bg-[#0084FF] hover:bg-blue-700 cursor-pointer p-3' onClick={() => setOrderBy('likes')}>Most Popular</Badge>
           </div>
           <div className="mr-6">
             Filter by:
-            
           </div>
         </div>
       </div>

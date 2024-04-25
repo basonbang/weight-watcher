@@ -26,7 +26,7 @@ function App() {
         <Route path="/" element={<Header username={username}/>} >
           <Route index element={<Home />} />
           <Route path="create" element={<CreatePost username={username}/>} />
-          <Route path=':id' element={<PostPage />} />
+          <Route path=':id' element={<PostPage username={username}/>} />
           <Route path=':id/edit' element={<EditPost />} />
           <Route path='*' element={<NoMatch />} />
         </Route>
