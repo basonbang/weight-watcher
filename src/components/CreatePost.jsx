@@ -1,13 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
+import { useToast } from './ui/use-toast';
+import { Toaster } from './ui/toaster';
 
 import { supabase } from '@/supabaseClient';
 
 function CreatePost({username}) {
 
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [fileContent, setFileContent] = useState(null);
@@ -22,7 +27,7 @@ function CreatePost({username}) {
     if (validTypes.includes(file.type)) {
       // Upload file to Supabase storage
       setFileName(file.name);
-      const path = `uploads/${new Date().getTime()}_${file.name}`;  // construct path
+      const path = `uploads/${file.name}`;  // construct path
       try {
         const { data, error } = await supabase.storage.from('Content').upload(path, file, {
           cacheControl: '3600',
@@ -70,6 +75,10 @@ function CreatePost({username}) {
     setDescription('');
     setFileContent(null);
     setFileName('');
+    toast({
+      className: 'bg-green-500 border-none',
+      description: "Post created successfully.",
+    })
   }
 
   return (
@@ -129,6 +138,7 @@ function CreatePost({username}) {
         <Button type='submit' className="bg-blue-500 hover:bg-blue-700 rounded-md text-white transition duration-200 ease-in-out">
           Create!
         </Button>
+        <Toaster />
       </form>
     </main>
   );

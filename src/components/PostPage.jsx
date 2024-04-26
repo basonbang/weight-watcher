@@ -1,12 +1,23 @@
 import React from 'react';
 import { supabase } from '@/supabaseClient';
 import { useState, useEffect } from 'react';  
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AspectRatio } from './ui/aspect-ratio';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import { Toaster } from './ui/toaster';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Link } from 'react-router-dom';
 
 function PostPage({username}) {
@@ -17,6 +28,7 @@ function PostPage({username}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { id } = useParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // determine if post content is an image or video
   const isImage = post.content?.includes('jpg') || post.content?.includes('png') || post.content?.includes('gif');
@@ -83,7 +95,34 @@ function PostPage({username}) {
       description: "Your comment has been sent.",
     })
     setComment('')
+  }
 
+  const deletePostFromDatabase = async () => {
+    try {
+      const { error } = await supabase
+        .from('Posts')
+        .delete()
+        .eq('id', id)
+      navigate('/')
+
+      // delete post from supabase storage
+      const postFileName = post.content.substring(post.content.indexOf('uploads')).replace(/%20/g, " ")
+      console.log(postFileName);
+      const { data, error: storageError } = await supabase
+        .storage
+        .from('Content')
+        .remove([postFileName])
+      if (storageError) {
+        console.error('Error deleting file from storage: ', storageError)
+      }
+    } catch (error) {
+      console.log('Error: ', error.message);
+      toast({
+        className: 'bg-red-500 border-none',
+        title: 'Uh oh! Something went wrong',
+        description: "Error deleting post.",
+      })
+    }
   }
 
   useEffect(() => {
@@ -118,15 +157,30 @@ function PostPage({username}) {
               <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#0084FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </Link>
-          <button>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 6H21" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M10 11V17" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M14 11V17" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 6H21" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M19 6V20C19 21 18 22 17 22H7C6 22 5 21 5 20V6" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 6V4C8 3 9 2 10 2H14C15 2 16 3 16 4V6" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 11V17" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 11V17" stroke="#0095FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </AlertDialogTrigger>
+            <AlertDialogContent className='bg-black'>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription className='text-white'>
+                  This action cannot be undone. This will delete your post from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className='bg-primary'>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={deletePostFromDatabase} className='hover:bg-red-600'>Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          
         </div>
       </div>
       <h2>{post.title}</h2>
