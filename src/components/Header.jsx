@@ -9,7 +9,7 @@ const Header = ({username}) => {
       <header className='flex justify-between items-center my-5 mx-3' >
         <Link to='/' className='flex justify-center items-center text-2xl px-5 hover:scale-105 transition duration-200 ease-in-out '>
           <img className='filter invert mr-4' src='\src\assets\icon\dumbbell.png' alt="A dumbbell icon" />
-          <h1 className='font-semibold '>Weight Watchers</h1>
+          <h1 className='font-semibold '>Weight Watcher</h1>
         </Link>
         <div className='flex items-center'>
           <p className='font-bold bg-gradient-to-r from-slate-50 to-blue-500 text-transparent bg-clip-text'>{`Hello ${username}!`}</p>
