@@ -129,6 +129,7 @@ function CreatePost({username}) {
               type="file"
               accept="image/*, video/*"
               className="cursor-pointer mb-1"
+              required
               onChange={validateAndSetContent}
             />
             {fileName && (<p className='text-sm font-normal text-muted-foreground'>{fileName}</p>)}
