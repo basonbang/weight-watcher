@@ -3,12 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "./ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "./ui/use-toast";
 import { Toaster } from "./ui/toaster";
 
 import { supabase } from "@/supabaseClient";
-
 
 const EditPost = () => {
 
@@ -19,6 +19,30 @@ const EditPost = () => {
   const [fileContent, setFileContent] = useState(null);
   const [fileName, setFileName] = useState('');
   const { toast } = useToast();
+  const [flags, setFlags] = useState([])
+  const [clickedBadges, setClickedBadges] = useState({
+    Image: false,
+    Video: false
+  })
+
+  const handleBadgeClick = (badgeName) => {
+    setClickedBadges(prevState => ({
+      ...prevState,
+      [badgeName]: !prevState[badgeName]
+    }))
+  }
+
+  const updateFlags = (event) => {
+    const flag = event.target.innerText;
+    handleBadgeClick(flag);
+  
+    // remove flag if already present, add if not
+    if (flags.includes(flag)) {
+      setFlags(flags.filter((f) => f !== flag));
+    } else {
+      setFlags([...flags, flag]);
+    }
+  }
 
   const validateAndSetContent = async (event) => {
     const file = event.target.files[0];
@@ -29,11 +53,14 @@ const EditPost = () => {
     if (validTypes.includes(file.type)) {
       // Upload file to Supabase storage
       setFileName(file.name);
-      const path = `uploads/${new Date().getTime()}_${file.name}`;  // construct path
+      const path = `uploads/${file.name}`;  // construct path
       try {
         const { data, error } = await supabase.storage.from('Content').upload(path, file, {
           cacheControl: '3600',
           upsert: false
+        })
+        toast({
+          description: "File uploaded.",
         })
       } catch (error){
           console.error('Error uploading file: ', error.message)
@@ -64,7 +91,7 @@ const EditPost = () => {
       const { data, error } = await supabase
         .from('Posts')
         .update([
-          {title: title, description: description, content: fileContent}
+          {title: title, description: description, tags:flags, content: fileContent}
         ])
         .eq('id', id)
       toast({
@@ -108,7 +135,21 @@ const EditPost = () => {
       <h1 className="font-bold text-5xl mt-[60px] mb-4 mx-72 w-max">
         Update Post
       </h1>
-      <p>Set Your Flags: </p>
+      <div className='justify-center ml-6 mb-4 flex items-center gap-4'>
+        <p>Set Your Flags: </p>
+        <Badge
+          className={`cursor-pointer p-3 ${clickedBadges["Image"] ? 'bg-blue-700' : 'bg-[#0084FF]'} hover:bg-blue-700 transform hover:scale-110 transition-transform`}
+          onClick={updateFlags}
+        >
+          Image
+        </Badge>
+        <Badge
+          className={`cursor-pointer p-3 ${clickedBadges["Video"] ? 'bg-blue-700' : 'bg-[#0084FF]'} hover:bg-blue-700 transform hover:scale-110 transition-transform`}
+          onClick={updateFlags}
+        >
+          Video
+        </Badge>
+      </div>
       <form
         onSubmit={updatePost}
         className='pb-10'

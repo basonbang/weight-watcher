@@ -3,6 +3,7 @@ import { supabase } from '@/supabaseClient';
 import { useState, useEffect } from 'react';  
 import { useParams, useNavigate } from 'react-router-dom';
 import { Textarea } from './ui/textarea';
+import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import { Toaster } from './ui/toaster';
@@ -32,7 +33,7 @@ function PostPage({username}) {
   const navigate = useNavigate();
 
   // determine if post content is an image or video
-  const isImage = post.content?.includes('jpg') || post.content?.includes('png') || post.content?.includes('gif');
+  const isImage = post.content?.toLowerCase().includes('jpg') || post.content?.toLowerCase().includes('png') || post.content?.toLowerCase().includes('gif');
 
   // toggle description expansion
   const toggleExpanded = () => {
@@ -215,7 +216,21 @@ function PostPage({username}) {
                 </button>
               </div> 
             </div>
-            {/** Todo: Add tags here */}
+            <div>
+            <div className='flex my-4'>
+              {
+                post.tags?.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    className="bg-[#0084FF] hover:bg-blue-700 cursor-pointer p-3 mr-2"
+                  >
+                    {tag}
+                  </ Badge>
+                ))
+              }
+            </div>
+            
+            </div>
             <div className='w-full my-6 bg-gray-950'>
                 {isImage ? <img src={post.content} alt={post.title} className='w-full h-72 object-contain' /> : <video src={post.content} controls />}
             </div>
@@ -246,7 +261,8 @@ function PostPage({username}) {
                   currentComments?.map((comment, index) => (
                     <div key={index} className='bg-[#111113] flex flex-col text-left min-h-10 pl-[10px] py-3 my-2 rounded-md'>
                       <p className='font-bold text-[14px]'>By &nbsp;
-                      <span className='bg-gradient-to-r from-blue-500 to-blue-600 text-transparent bg-clip-text'>{comment.author}</span> - {comment.date}</p>
+                        <span className='bg-gradient-to-r from-blue-500 to-blue-600 text-transparent bg-clip-text'>{comment.author}</span> - {comment.date}
+                      </p>
                       <p className='font-light text-sm'>{comment.content}</p>
                     </div>
                   ))

@@ -7,33 +7,34 @@ import { TailSpin } from 'react-loading-icons';
 
 const Home = () => {
 
-  const isInitialMount = useRef(true);
+  const isInitialMountOrder = useRef(true);
+  const isInitialMountFilter = useRef(true);
   const [isLoading, setIsLoading] = useState(true)
   const [posts, setPosts] = useState([])
   const [orderBy, setOrderBy] = useState('');
-
-  console.log(orderBy);
+  const [filterBy, setFilterBy] = useState('')
   
   // read all posts from Supabase as soon as the component mounts
   useEffect(() => {
     const fetchPosts = async () => {
       try {
+        setIsLoading(true)
         const { data, error } = await supabase
           .from('Posts')
           .select()
         setPosts(data)
+        setIsLoading(false)
       } catch (error) {
         console.log('Error: ', error.message)
       }
     }
     fetchPosts()
-    setIsLoading(false)
   }, [])
 
   // update home page once orderBy state changes
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+    if (isInitialMountOrder.current) {
+      isInitialMountOrder.current = false;
     } else {
       const updateHomePage = async () => {
         setIsLoading(true)
@@ -54,7 +55,29 @@ const Home = () => {
 
   }, [orderBy])
 
-  console.log(posts);
+  // update home page if a filter is selected
+  useEffect(() => {
+    if (isInitialMountFilter.current) {
+      isInitialMountFilter.current = false;
+    } else {
+      const filterHomePage = async () => {
+        setIsLoading(true)
+        try {
+          const { data, error} = await supabase
+            .from('Posts')
+            .select()
+            .contains('tags', filterBy)
+          console.log(data);
+          setPosts(data)
+          setIsLoading(false)
+        } catch (error) {
+          console.log('Error: ', error)
+        }
+      }
+      filterHomePage()
+    }
+  }, [filterBy])
+
   return (
     <div className="px-12">
       <div className="border-[3px] rounded-3xl border-gray-900 flex justify-between items-center mb-7 p-7">
@@ -74,7 +97,20 @@ const Home = () => {
               Most Popular
             </Badge>
           </div>
-          <div className="mr-6">Filter by:</div>
+          <div className="mr-6 flex items-center gap-4">Filter by:
+            <Badge
+                className="bg-[#0084FF] hover:bg-blue-700 cursor-pointer p-3"
+                onClick={() => setFilterBy(["Image"])}
+              >
+                Image
+              </Badge>
+              <Badge
+                className="bg-[#0084FF] hover:bg-blue-700 cursor-pointer p-3"
+                onClick={() => setFilterBy(["Video"])}
+              >
+                Video
+              </Badge>
+          </div>
         </div>
       </div>
       <div className="mx-auto border-[6px] rounded-3xl border-[#111113] flex flex-col justify-center items-center ">
@@ -82,40 +118,48 @@ const Home = () => {
           <TailSpin />
         ) : (
           <div className="my-4 mx-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {posts.map((post) => (
+            {posts && posts.map((post) => (
               <Link
                 key={post.id}
                 className="border-2 border-gray-900 rounded-md p-2 bg-[#101012] flex flex-col h-full"
                 to={`/${post.id}`}
               >
-                <div className="w-full h-auto">
-                  <svg
-                    viewBox="0 0 363 219"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M219.312 18.25H90.75C82.7272 18.25 75.033 20.1728 69.36 23.5953C63.687 27.0178 60.5 31.6598 60.5 36.5V182.5C60.5 187.34 63.687 191.982 69.36 195.405C75.033 198.827 82.7272 200.75 90.75 200.75H272.25C280.273 200.75 287.967 198.827 293.64 195.405C299.313 191.982 302.5 187.34 302.5 182.5V68.4375L219.312 18.25Z"
-                      stroke="#F2F0E8"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M211.75 18.25V73H302.5"
-                      stroke="#F2F0E8"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M151.25 100.375L226.875 127.75L151.25 155.125V100.375Z"
-                      stroke="#F2F0E8"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="w-full h-auto flex justify-center">
+                  {
+                    (post.content?.toLowerCase().includes('jpg') || post.content?.toLowerCase().includes('png') || post.content?.toLowerCase().includes('gif') ? (
+                      <img src={post.content} className='h-48' />
+                    ) : (
+                    <svg
+                      viewBox="0 0 363 219"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className='h-48'
+                    >
+                      <path
+                        d="M219.312 18.25H90.75C82.7272 18.25 75.033 20.1728 69.36 23.5953C63.687 27.0178 60.5 31.6598 60.5 36.5V182.5C60.5 187.34 63.687 191.982 69.36 195.405C75.033 198.827 82.7272 200.75 90.75 200.75H272.25C280.273 200.75 287.967 198.827 293.64 195.405C299.313 191.982 302.5 187.34 302.5 182.5V68.4375L219.312 18.25Z"
+                        stroke="#F2F0E8"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M211.75 18.25V73H302.5"
+                        stroke="#F2F0E8"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M151.25 100.375L226.875 127.75L151.25 155.125V100.375Z"
+                        stroke="#F2F0E8"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+
+                    ))
+                  }
                 </div>
 
                 <div className="bg-[#09090B] flex-grow px-1 py-2 rounded-xl flex flex-col justify-around">

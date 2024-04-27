@@ -1,22 +1,45 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
 import { Toaster } from './ui/toaster';
+import { Badge } from './ui/badge';
 
 import { supabase } from '@/supabaseClient';
 
 function CreatePost({username}) {
 
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [fileContent, setFileContent] = useState(null);
   const [fileName, setFileName] = useState('');
+  const [flags, setFlags] = useState([])
+  const [clickedBadges, setClickedBadges] = useState({
+    Image: false,
+    Video: false
+  })
+
+  const handleBadgeClick = (badgeName) => {
+    setClickedBadges(prevState => ({
+      ...prevState,
+      [badgeName]: !prevState[badgeName]
+    }))
+  }
+
+  const updateFlags = (event) => {
+    const flag = event.target.innerText;
+    handleBadgeClick(flag);
+  
+    // remove flag if already present, add if not
+    if (flags.includes(flag)) {
+      setFlags(flags.filter((f) => f !== flag));
+    } else {
+      setFlags([...flags, flag]);
+    }
+  }
 
   const validateAndSetContent = async (event) => {
     const file = event.target.files[0];
@@ -32,6 +55,9 @@ function CreatePost({username}) {
         const { data, error } = await supabase.storage.from('Content').upload(path, file, {
           cacheControl: '3600',
           upsert: false
+        })
+        toast({
+          description: "File uploaded.",
         })
       } catch (error){
           console.error('Error uploading file: ', error.message)
@@ -63,7 +89,7 @@ function CreatePost({username}) {
       const { data, error } = await supabase
         .from('Posts')
         .insert([
-          {title: title, author: username, description: description, content: fileContent}
+          {title: title, author: username, description: description, tags: flags, content: fileContent}
         ])
     } catch (error) {
       console.error('Error creating post: ', error.message)
@@ -86,7 +112,21 @@ function CreatePost({username}) {
       <h1 className="font-bold text-5xl mt-[60px] mb-4 mx-72 w-max">
         Create Your Post
       </h1>
-      <p>Set Your Flags: </p>
+      <div className='justify-center ml-6 mb-4 flex items-center gap-4'>
+        <p>Set Your Flags: </p>
+        <Badge
+          className={`cursor-pointer p-3 ${clickedBadges["Image"] ? 'bg-blue-700' : 'bg-[#0084FF]'} hover:bg-blue-700 transform hover:scale-110 transition-transform`}
+          onClick={updateFlags}
+        >
+          Image
+        </Badge>
+        <Badge
+          className={`cursor-pointer p-3 ${clickedBadges["Video"] ? 'bg-blue-700' : 'bg-[#0084FF]'} hover:bg-blue-700 transform hover:scale-110 transition-transform`}
+          onClick={updateFlags}
+        >
+          Video
+        </Badge>
+      </div>
       <form
         onSubmit={handleSubmit}
         className='pb-10'
